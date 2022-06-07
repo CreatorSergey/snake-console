@@ -117,10 +117,11 @@ public:
         matrix[item.x][item.y] = { 0x2A, 12 };
     }
 
-    void Draw(point& fruit, point& snake, size_t score) {
-        std::cout << "score: " << utils::addZero(score) << "$\n";
-        std::cout << "fruit: x= " << utils::addZero(fruit.x) << " y=" << utils::addZero(fruit.y) << "\n";
-        std::cout << "snake: x= " << utils::addZero(snake.x) << " y=" << utils::addZero(snake.y) << "\n";
+    void Draw(point& fruit, point& snake, size_t score, size_t seconds) {
+        std::cout << "score: " << utils::addZero(score) << " $\n";
+        std::cout << "spped: 1 step / " << utils::addZero(seconds) << " ms\n";
+        std::cout << "fruit: x = " << utils::addZero(fruit.x) << "; y = " << utils::addZero(fruit.y) << "\n";
+        std::cout << "snake: x = " << utils::addZero(snake.x) << "; y = " << utils::addZero(snake.y) << "\n";
         for(const auto& line: matrix) {
             for(const auto& px: line) {
                 if(px.color == 4)

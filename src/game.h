@@ -8,6 +8,7 @@
 #include "board.h"
 #include "fruit.h"
 #include "console-utils.h"
+#include "timer.h"
 
 class Game {
 public:
@@ -15,11 +16,11 @@ public:
 
     void Init() {
         fruit_1 = fruit(board_.GetRandomX(), board_.GetRandomY());
-        matrix_ = utils::Matrix (board_.GetWidth(), board_.GetHeight());
+        matrix_ = utils::Matrix (board_.GetHeight(), board_.GetWidth());
         matrix_.Init();
         matrix_.MoveSnakePos(snake_1);
         matrix_.MoveFruitPos(fruit_1);
-        matrix_.Draw(fruit_1, snake_1, score);
+        matrix_.Draw(fruit_1, snake_1, score, timer.elapsedMilliseconds());
     }
     
     void score_calc(snake& snake_, point& fruit_, utils::Matrix& matrix, game::Board& board) {
@@ -61,7 +62,7 @@ public:
             out.y = temp.y;
             matrix.MoveSnakePos(out);
             score_calc(out, fruit, matrix, board);
-            matrix.Draw(fruit, out, score);
+            matrix.Draw(fruit, out, score, timer.elapsedMilliseconds());
         }
 
         if(gameOver)
@@ -72,63 +73,75 @@ public:
         }
     }
 
+    void RunCommand() {
+        switch (last_command_) {
+            case 27:               // press ESC to exit
+                run = false;
+            break;
+
+            case 'a': {
+                snake temp = snake_1;
+                if(temp.y == 1)
+                    temp.y = board_.GetHeight() - 2;
+                else
+                    temp.y -= 1;
+                work(temp, fruit_1, snake_1, matrix_, board_);
+                break;
+            }
+
+            case 'd': {
+                snake temp = snake_1;
+                temp.y += 1;
+                if(temp.y == board_.GetHeight() - 1)
+                temp.y = 1;
+
+                work(temp, fruit_1, snake_1, matrix_, board_);
+                break;
+            }
+
+            case 'w': {
+                snake temp = snake_1;
+                if(temp.x == 1)
+                temp.x = board_.GetWidth() - 2;
+                else
+                    temp.x -= 1;
+                work(temp, fruit_1, snake_1, matrix_, board_);
+                break;
+            }
+
+            case 's':
+            {
+                snake temp = snake_1;
+                temp.x += 1;
+                if(temp.x == board_.GetWidth() - 1)
+                    temp.x = 1;
+                work(temp, fruit_1, snake_1, matrix_, board_);
+                break;
+            }
+        }
+    }
+
     void Run() {
+
+        timer.Start();
         while (run) {
             utils::SetCursorVisible(false);
+
+            auto speed = 300;
+            if((score / 5) > 0)
+                speed = speed / (score / 5);
+
+            if(timer.elapsedMilliseconds() > speed)
+            {
+                if(last_command_ != 0)
+                    RunCommand();
+
+                timer.Start();
+            }
+
             
             if (_kbhit())
-            {
-                char ch = _getch();
-                switch (ch)
-                {
-                    case 27:               // press ESC to exit
-                        run = false;
-                    break;
-
-                    case 'a':
-                    {
-                        snake temp = snake_1;
-                        if(temp.y == 1)
-                            temp.y = board_.GetHeight() - 2;
-                        else
-                            temp.y -= 1;
-                        work(temp, fruit_1, snake_1, matrix_, board_);
-                        break;
-                    }
-
-                    case 'd':
-                    {
-                        snake temp = snake_1;
-                        temp.y += 1;
-                        if(temp.y == board_.GetHeight() - 1)
-                        temp.y = 1;
-
-                        work(temp, fruit_1, snake_1, matrix_, board_);
-                        break;
-                    }
-
-                    case 'w':
-                    {
-                        snake temp = snake_1;
-                        if(temp.x == 1)
-                        temp.x = board_.GetWidth() - 2;
-                        else
-                            temp.x -= 1;
-                        work(temp, fruit_1, snake_1, matrix_, board_);
-                        break;
-                    }
-
-                    case 's':
-                    {
-                        snake temp = snake_1;
-                        temp.x += 1;
-                        if(temp.x == board_.GetWidth() - 1)
-                            temp.x = 1;
-                        work(temp, fruit_1, snake_1, matrix_, board_);
-                        break;
-                    }
-                }
-            }
+                last_command_ = _getch();
         }
     }
 
@@ -137,7 +150,9 @@ private:
     bool run = true;
     std::uint16_t score{0};
     utils::Matrix matrix_;
-    game::Board board_{20, 20};
+    game::Board board_{15, 30};
     snake snake_1{1, 1};
     fruit fruit_1{0,0};
+    char last_command_{'d'};
+    utils::Timer timer;
 };
